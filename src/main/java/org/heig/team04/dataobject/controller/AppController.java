@@ -1,60 +1,60 @@
 package org.heig.team04.dataobject.controller;
 
-import org.heig.team04.dataobject.service.AppService;
+import org.heig.team04.dataobject.service.AppServiceS3Impl;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/data-object")
 public class AppController {
 
-    private final AppService appService;
+    private final AppServiceS3Impl appServiceS3Impl;
 
-    public AppController(AppService appService) {
-        this.appService = appService;
+    public AppController(AppServiceS3Impl appServiceS3Impl) {
+        this.appServiceS3Impl = appServiceS3Impl;
     }
 
     @PostMapping("/create")
     public void create(@RequestParam String resourceUri) {
-        appService.create(resourceUri);
+        appServiceS3Impl.create(resourceUri);
     }
 
     @PostMapping("/create")
     public void create(@RequestParam String resourceUri, @RequestParam String fileUrl) {
-        appService.create(resourceUri, fileUrl);
+        appServiceS3Impl.create(resourceUri, fileUrl);
     }
 
     @PostMapping("/create")
     public void create(@RequestParam String resourceUri, @RequestBody byte[] fileContent) {
-        appService.create(resourceUri, fileContent);
+        appServiceS3Impl.create(resourceUri, fileContent);
     }
 
     @GetMapping("/read")
     public byte[] read(@RequestParam String resourceUri) {
-        return appService.read(resourceUri);
+        return appServiceS3Impl.read(resourceUri);
     }
 
     @PutMapping("/update")
     public void update(@RequestParam String resourceUri, @RequestParam String fileUrl) {
-        appService.update(resourceUri, fileUrl);
+        appServiceS3Impl.update(resourceUri, fileUrl);
     }
 
     @PutMapping("/update")
     public void update(@RequestParam String resourceUri, @RequestBody byte[] fileContent) {
-        appService.update(resourceUri, fileContent);
+        appServiceS3Impl.update(resourceUri, fileContent);
     }
 
     @DeleteMapping("/delete")
     public void delete(@RequestParam String resourceUri) {
-        appService.delete(resourceUri);
+        appServiceS3Impl.delete(resourceUri);
     }
 
     @GetMapping("/publish")
     public String publish(@RequestParam String resourceUri) {
-        return appService.publish(resourceUri);
+        return appServiceS3Impl.publish(resourceUri);
     }
 
     @GetMapping("/exists")
     public boolean exists(@RequestParam String resourceUri) {
-        return appService.exists(resourceUri);
+        return appServiceS3Impl.exists(resourceUri);
     }
 }
