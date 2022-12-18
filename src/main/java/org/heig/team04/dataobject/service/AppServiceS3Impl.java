@@ -235,10 +235,6 @@ public class AppServiceS3Impl implements org.heig.team04.dataobject.service.Serv
     public String publish(String resourceUri) throws IllegalArgumentException {
         String[] splitUri = splitUri(resourceUri);
 
-        if (splitUri.length != 2) {
-            throw new IllegalArgumentException("Invalid resourceUri");
-        }
-
         if (!exists(resourceUri)) {
             throw new IllegalArgumentException("Resource doesn't exist");
         }

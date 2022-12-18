@@ -1,6 +1,8 @@
 package org.heig.team04.dataobject.controller;
 
+import com.amazonaws.AmazonServiceException;
 import org.heig.team04.dataobject.service.ServiceInterface;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.heig.team04.dataobject.dto.DTOs;
 
@@ -55,7 +57,14 @@ public class AppController {
     }
 
     @GetMapping("/exists")
-    public boolean exists(@RequestBody DTOs.ObjectDTO objectDTO) {
-        return appService.exists(objectDTO.getUri());
+    public ResponseEntity<String> exists(@RequestBody DTOs.ObjectDTO objectDTO) {
+        boolean exists;
+        try {
+            exists = appService.exists(objectDTO.getUri());
+        } catch (AmazonServiceException e) {
+            return ResponseEntity.badRequest().body(e.getStatusCode() + " " + e.getErrorMessage());
+        }
+
+        return ResponseEntity.ok().body(String.valueOf(exists));
     }
 }

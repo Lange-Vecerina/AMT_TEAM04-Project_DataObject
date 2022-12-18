@@ -1,12 +1,11 @@
 package org.heig.team04.dataobject.dto;
 
 public class DTOs {
+    DTOs() {
+    }
+
     public static class ObjectDTO {
         private String uri;
-
-        public ObjectDTO(String uri) {
-            this.uri = uri;
-        }
 
         public String getUri() {
             return uri;
