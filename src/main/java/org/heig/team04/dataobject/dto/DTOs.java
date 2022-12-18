@@ -1,7 +1,7 @@
 package org.heig.team04.dataobject.dto;
 
 public class DTOs {
-    public class ObjectDTO {
+    public static class ObjectDTO {
         private String uri;
 
         public ObjectDTO(String uri) {
@@ -17,7 +17,7 @@ public class DTOs {
         }
     }
 
-    public class ObjectWithContentDTO {
+    public static class ObjectWithContentDTO {
         private String uri;
         private byte[] content;
 
@@ -43,7 +43,7 @@ public class DTOs {
         }
     }
 
-    public class ObjectWithSourceDTO {
+    public static class ObjectWithSourceDTO {
         private String uri;
         private String source;
 

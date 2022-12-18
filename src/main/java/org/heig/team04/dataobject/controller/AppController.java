@@ -19,12 +19,12 @@ public class AppController {
         appService.create(objectDTO.getUri());
     }
 
-    @PostMapping("/create")
+    @PostMapping("/create-with-source")
     public void create(@RequestBody DTOs.ObjectWithSourceDTO objectWithSourceDTO) {
         appService.create(objectWithSourceDTO.getUri(), objectWithSourceDTO.getSource());
     }
 
-    @PostMapping("/create")
+    @PostMapping("/create-with-content")
     public void create(@RequestBody DTOs.ObjectWithContentDTO objectWithContentDTO) {
         appService.create(objectWithContentDTO.getUri(), objectWithContentDTO.getContent());
     }
@@ -34,12 +34,12 @@ public class AppController {
         return appService.read(objectDTO.getUri());
     }
 
-    @PutMapping("/update")
+    @PutMapping("/update-with-source")
     public void update(@RequestBody DTOs.ObjectWithSourceDTO objectWithSourceDTO) {
         appService.update(objectWithSourceDTO.getUri(), objectWithSourceDTO.getSource());
     }
 
-    @PutMapping("/update")
+    @PutMapping("/update-with-content")
     public void update(@RequestBody DTOs.ObjectWithContentDTO objectWithContentDTO) {
         appService.update(objectWithContentDTO.getUri(), objectWithContentDTO.getContent());
     }
