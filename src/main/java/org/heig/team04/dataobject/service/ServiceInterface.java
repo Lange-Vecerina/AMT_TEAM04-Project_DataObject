@@ -1,8 +1,6 @@
 package org.heig.team04.dataobject.service;
 
 public interface ServiceInterface {
-    void create(String resourceUri);
-
     void create(String resourceUri, String fileUrl);
 
     void create(String resourceUri, byte[] fileContent);
@@ -13,9 +11,9 @@ public interface ServiceInterface {
 
     void update(String resourceUri, byte[] fileContent);
 
-    void delete(String resourceUri);
+    void delete(String resourceUri, boolean recursive);
 
-    String publish(String resourceUri);
+    String publish(String resourceUri, int ttl);
 
     boolean exists(String resourceUri);
 }

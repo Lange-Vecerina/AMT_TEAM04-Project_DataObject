@@ -6,6 +6,9 @@ import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.util.IOUtils;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +23,6 @@ import java.nio.file.Path;
 @Service
 public class AppServiceS3Impl implements org.heig.team04.dataobject.service.ServiceInterface {
     private final AmazonS3 amazonS3;
-    private static final int TTL = 1800;
 
     public AppServiceS3Impl() {
         this.amazonS3 = AmazonS3ClientBuilder.standard()
@@ -78,20 +80,10 @@ public class AppServiceS3Impl implements org.heig.team04.dataobject.service.Serv
         }
     }
 
-    @Override
-    public void create(String resourceUri) throws IllegalArgumentException, AmazonServiceException {
-        String[] splitUri = splitUri(resourceUri);
-
-        if (splitUri.length > 2 || splitUri[1].length() != 0) {
-            throw new IllegalArgumentException("Invalid resourceUri");
-        }
-
-        if (exists(splitUri[0])) {
-            throw new IllegalArgumentException("Resource already exists");
-        }
+    private void createBucket(String bucketName) throws AmazonServiceException {
 
         try {
-            amazonS3.createBucket(splitUri[0]);
+            amazonS3.createBucket(bucketName);
         } catch (AmazonServiceException e) {
             throw new AmazonServiceException("Error creating bucket", e);
         }
@@ -111,7 +103,7 @@ public class AppServiceS3Impl implements org.heig.team04.dataobject.service.Serv
 
         try {
             if (!exists(splitUri[0])) {
-                create(splitUri[0]);
+                createBucket(splitUri[0]);
             }
 
             putSourceContentOnS3(fileUrl, splitUri);
@@ -138,7 +130,7 @@ public class AppServiceS3Impl implements org.heig.team04.dataobject.service.Serv
 
         try {
             if (!exists(splitUri[0])) {
-                create(splitUri[0]);
+                createBucket(splitUri[0]);
             }
 
             putByteArrayOnS3(fileContent, splitUri);
@@ -213,7 +205,7 @@ public class AppServiceS3Impl implements org.heig.team04.dataobject.service.Serv
 }
 
     @Override
-    public void delete(String resourceUri) {
+    public void delete(String resourceUri, boolean recursive) throws IllegalArgumentException, AmazonServiceException {
         String[] splitUri = splitUri(resourceUri);
 
         if (splitUri.length != 2) {
@@ -225,14 +217,50 @@ public class AppServiceS3Impl implements org.heig.team04.dataobject.service.Serv
         }
 
         try {
-            amazonS3.deleteObject(splitUri[0], splitUri[1]);
+            // If the resource is a bucket and recursive is true, delete all objects in the bucket
+            if (exists(splitUri[0]) && recursive && splitUri[1].equals("")) {
+                ObjectListing objectListing = amazonS3.listObjects(splitUri[0]);
+                while (true) {
+                    for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
+                        amazonS3.deleteObject(splitUri[0], objectSummary.getKey());
+                    }
+
+                    if (objectListing.isTruncated()) {
+                        objectListing = amazonS3.listNextBatchOfObjects(objectListing);
+                    } else {
+                        break;
+                    }
+                }
+            } // else if the resource is a folder and recursive is true, delete all objects in the folder
+            else if (exists(splitUri[0]) && recursive && !splitUri[1].equals("")) {
+                ObjectListing objectListing = amazonS3.listObjects(splitUri[0], splitUri[1]);
+                while (true) {
+                    for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
+                        amazonS3.deleteObject(splitUri[0], objectSummary.getKey());
+                    }
+
+                    if (objectListing.isTruncated()) {
+                        objectListing = amazonS3.listNextBatchOfObjects(objectListing);
+                    } else {
+                        break;
+                    }
+                }
+            } // else if the resource is a file, delete the file
+            else if (exists(splitUri[0]) && !recursive && !splitUri[1].equals("")) {
+                amazonS3.deleteObject(splitUri[0], splitUri[1]);
+            } // else throw an exception
+            else {
+                throw new IllegalArgumentException("Resource isn't empty");
+            }
         } catch (AmazonServiceException e) {
             throw new AmazonServiceException("Error deleting object", e);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid resourceUri", e);
         }
     }
 
     @Override
-    public String publish(String resourceUri) throws IllegalArgumentException {
+    public String publish(String resourceUri, int ttl) throws IllegalArgumentException, AmazonServiceException {
         String[] splitUri = splitUri(resourceUri);
 
         if (!exists(resourceUri)) {
@@ -240,7 +268,7 @@ public class AppServiceS3Impl implements org.heig.team04.dataobject.service.Serv
         }
 
         try {
-            return amazonS3.generatePresignedUrl(splitUri[0], splitUri[1], java.util.Date.from(java.time.Instant.now().plusSeconds(TTL))).toString();
+            return amazonS3.generatePresignedUrl(splitUri[0], splitUri[1], java.util.Date.from(java.time.Instant.now().plusSeconds(ttl))).toString();
         } catch (SdkClientException e) {
             throw new IllegalArgumentException("Error publishing object", e);
         }
@@ -256,6 +284,14 @@ public class AppServiceS3Impl implements org.heig.team04.dataobject.service.Serv
 
         if (splitUri.length == 2) {
             try {
+                // List all objects in the folder
+                ObjectListing objectListing = amazonS3.listObjects(splitUri[0], splitUri[1]);
+
+                // If the folder is not empty, return true
+                if (objectListing.getObjectSummaries().size() > 0) {
+                    return true;
+                }
+
                 return amazonS3.doesObjectExist(splitUri[0], splitUri[1]);
             } catch (AmazonServiceException e) {
                 throw new AmazonServiceException("Error checking object existence", e);

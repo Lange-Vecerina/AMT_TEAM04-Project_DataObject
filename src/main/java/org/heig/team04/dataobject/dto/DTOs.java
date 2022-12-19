@@ -4,7 +4,7 @@ public class DTOs {
     DTOs() {
     }
 
-    public static class ObjectDTO {
+    public static class UriDTO {
         private String uri;
 
         public String getUri() {
@@ -16,21 +16,35 @@ public class DTOs {
         }
     }
 
-    public static class ObjectWithContentDTO {
-        private String uri;
+    public static class UriWithContentDTO extends UriDTO {
         private byte[] content;
 
-        public ObjectWithContentDTO(String uri, byte[] content) {
-            this.uri = uri;
+        public byte[] getContent() {
+            return content;
+        }
+
+        public void setContent(byte[] content) {
             this.content = content;
         }
+    }
 
-        public String getUri() {
-            return uri;
+    public static class UriWithSourceDTO extends UriDTO {
+        private String source;
+
+        public String getSource() {
+            return source;
         }
 
-        public void setUri(String uri) {
-            this.uri = uri;
+        public void setSource(String source) {
+            this.source = source;
+        }
+    }
+
+    public static class ContentDTO {
+        private byte[] content;
+
+        public ContentDTO(byte[] content) {
+            this.content = content;
         }
 
         public byte[] getContent() {
@@ -42,30 +56,19 @@ public class DTOs {
         }
     }
 
-    public static class ObjectWithSourceDTO {
-        private String uri;
-        private String source;
+    public static class LinkDTO {
+        private String link;
 
-        public ObjectWithSourceDTO(String uri, String source) {
-            this.uri = uri;
-            this.source = source;
+        public LinkDTO(String link) {
+            this.link = link;
         }
 
-        public String getUri() {
-            return uri;
+        public String getLink() {
+            return link;
         }
 
-        public void setUri(String uri) {
-            this.uri = uri;
-        }
-
-        public String getSource() {
-            return source;
-        }
-
-        public void setSource(String source) {
-            this.source = source;
+        public void setLink(String link) {
+            this.link = link;
         }
     }
-
 }

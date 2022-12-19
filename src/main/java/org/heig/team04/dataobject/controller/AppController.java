@@ -16,51 +16,83 @@ public class AppController {
         this.appService = appService;
     }
 
-    @PostMapping("/create")
-    public void create(@RequestBody DTOs.ObjectDTO objectDTO) {
-        appService.create(objectDTO.getUri());
-    }
-
     @PostMapping("/create-with-source")
-    public void create(@RequestBody DTOs.ObjectWithSourceDTO objectWithSourceDTO) {
-        appService.create(objectWithSourceDTO.getUri(), objectWithSourceDTO.getSource());
+    public ResponseEntity<String> create(@RequestBody DTOs.UriWithSourceDTO uriWithSourceDTO) {
+        try {
+            appService.create(uriWithSourceDTO.getUri(), uriWithSourceDTO.getSource());
+        } catch (AmazonServiceException e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/create-with-content")
-    public void create(@RequestBody DTOs.ObjectWithContentDTO objectWithContentDTO) {
-        appService.create(objectWithContentDTO.getUri(), objectWithContentDTO.getContent());
+    public ResponseEntity<String> create(@RequestBody DTOs.UriWithContentDTO uriWithContentDTO) {
+        try {
+            appService.create(uriWithContentDTO.getUri(), uriWithContentDTO.getContent());
+        } catch (AmazonServiceException e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/read")
-    public byte[] read(@RequestBody DTOs.ObjectDTO objectDTO) {
-        return appService.read(objectDTO.getUri());
+    public ResponseEntity<DTOs.ContentDTO> read(@RequestParam DTOs.UriDTO uriDTO) {
+        byte[] content;
+        try {
+            content = appService.read(uriDTO.getUri());
+        } catch (AmazonServiceException e) {
+            return null;
+        }
+        return ResponseEntity.ok(new DTOs.ContentDTO(content));
     }
 
     @PutMapping("/update-with-source")
-    public void update(@RequestBody DTOs.ObjectWithSourceDTO objectWithSourceDTO) {
-        appService.update(objectWithSourceDTO.getUri(), objectWithSourceDTO.getSource());
+    public ResponseEntity<String> update(@RequestBody DTOs.UriWithSourceDTO uriWithSourceDTO) {
+        try {
+            appService.update(uriWithSourceDTO.getUri(), uriWithSourceDTO.getSource());
+        } catch (AmazonServiceException e) {
+            return ResponseEntity.status(404).body("Object not found");
+        }
+        return ResponseEntity.ok("Object updated");
     }
 
     @PutMapping("/update-with-content")
-    public void update(@RequestBody DTOs.ObjectWithContentDTO objectWithContentDTO) {
-        appService.update(objectWithContentDTO.getUri(), objectWithContentDTO.getContent());
+    public ResponseEntity<String> update(@RequestBody DTOs.UriWithContentDTO uriWithContentDTO) {
+        try {
+            appService.update(uriWithContentDTO.getUri(), uriWithContentDTO.getContent());
+        } catch (AmazonServiceException e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+        return ResponseEntity.ok("Object updated");
     }
 
     @DeleteMapping("/delete")
-    public void delete(@RequestBody DTOs.ObjectDTO objectDTO) {
-        appService.delete(objectDTO.getUri());
+    public ResponseEntity<String> delete(@RequestParam String uri, @RequestParam(defaultValue = "false") boolean ttl) {
+        try {
+            appService.delete(uri, ttl);
+        } catch (AmazonServiceException e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+        return ResponseEntity.ok("Object deleted");
     }
 
     @GetMapping("/publish")
-    public String publish(@RequestBody DTOs.ObjectDTO objectDTO) {
-        return appService.publish(objectDTO.getUri());
+    public ResponseEntity<DTOs.LinkDTO> publish(@RequestParam String uri, @RequestParam(defaultValue = "1800") int ttl) {
+        String link;
+        try {
+            link = appService.publish(uri, ttl);
+        } catch (AmazonServiceException e) {
+            return ResponseEntity.status(404).body(new DTOs.LinkDTO("Object not found"));
+        }
+        return ResponseEntity.ok(new DTOs.LinkDTO(link));
     }
 
     @GetMapping("/exists")
-    public ResponseEntity<String> exists(@RequestBody DTOs.ObjectDTO objectDTO) {
+    public ResponseEntity<String> exists(@RequestParam String uri) {
         boolean exists;
         try {
-            exists = appService.exists(objectDTO.getUri());
+            exists = appService.exists(uri);
         } catch (AmazonServiceException e) {
             return ResponseEntity.badRequest().body(e.getStatusCode() + " " + e.getErrorMessage());
         }
