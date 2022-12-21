@@ -1,6 +1,7 @@
 package org.heig.team04.dataobject.service;
 
 import org.heig.team04.dataobject.service.exceptions.*;
+import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
@@ -27,6 +28,7 @@ import java.time.Duration;
  * @see ServiceInterface
  * @see S3Client
  */
+@Service
 public class ServiceAwsImpl implements ServiceInterface {
     private final S3Client s3; // AWS S3 client
     private final S3Presigner presigner; // AWS S3 presigner
