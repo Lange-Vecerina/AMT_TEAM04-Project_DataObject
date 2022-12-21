@@ -1,7 +1,8 @@
 package org.heig.team04.dataobject;
 
-import org.heig.team04.dataobject.service.AppServiceAWS;
+import org.heig.team04.dataobject.service.ServiceAwsImpl;
 import org.heig.team04.dataobject.service.ServiceInterface;
+import org.heig.team04.dataobject.service.exceptions.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -14,8 +15,19 @@ import java.nio.file.Files;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * This class is used to test the DataObjectService.
+ * It uses the ServiceAwsImpl implementation.
+ *
+ * @author Ivan Vecerina, Yanik Lange
+ * @version 1.0
+ *
+ * @see ServiceInterface
+ * @see ServiceAwsImpl
+ */
+// TODO: See how to handle the exceptions in the tests.
 class DataObjectServiceTests {
-    private static final ServiceInterface SERVICE = new AppServiceAWS();
+    private static final ServiceInterface SERVICE = new ServiceAwsImpl();
     private static final String ROOT_OBJECT = "amt.team04.diduno.education";
     private static final String FOLDER = "testFolder";
     private static final String OBJECT = "testObject";
@@ -31,7 +43,7 @@ class DataObjectServiceTests {
     }
 
     @AfterEach
-    public void tearDown() {
+    public void tearDown() throws ExternalServiceException, NotFoundException, DeleteCollectionNoRecursiveException {
         if (SERVICE.exists(ROOT_OBJECT + "/" + OBJECT)) {
             SERVICE.delete(ROOT_OBJECT + "/" + OBJECT, false);
         }
@@ -40,8 +52,9 @@ class DataObjectServiceTests {
             SERVICE.delete(ROOT_OBJECT + "/" + FOLDER, true);
         }
 
-        // TODO: Check if ok
-        // wait for eventual consistency
+        // TODO: Remove this when tests are made async,
+        //  it's just here to make sure the tests don't fail because of the async nature of the service
+        // Wait for eventual consistency
         try {
             Thread.sleep(10);
         } catch (InterruptedException e) {
@@ -50,7 +63,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void exists_RootObjectExists_Exists() {
+    void exists_RootObjectExists_Exists() throws ExternalServiceException {
         // when
         boolean exists = SERVICE.exists(ROOT_OBJECT);
 
@@ -59,7 +72,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void exists_RootObjectDoesntExist_DoesntExist() {
+    void exists_RootObjectDoesntExist_DoesntExist() throws ExternalServiceException {
         // given
         String bsRootObject = "bs.amt.team04.diduno.education";
 
@@ -71,7 +84,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void exists_RootObjectAndObjectExist_Exists() {
+    void exists_RootObjectAndObjectExist_Exists() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -85,7 +98,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void exists_RootObjectExistObjectDoesntExist_DoesntExist() {
+    void exists_RootObjectExistObjectDoesntExist_DoesntExist() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -98,7 +111,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void create_FromUrl_RootObjectExistsNewObject_Uploaded() {
+    void create_FromUrl_RootObjectExistsNewObject_Uploaded() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -111,7 +124,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void create_FromUrl_RootObjectExistsObjectAlreadyExists_ThrowException() {
+    void create_FromUrl_RootObjectExistsObjectAlreadyExists_ThrowException() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -122,12 +135,12 @@ class DataObjectServiceTests {
         Executable executable = () -> SERVICE.create(ROOT_OBJECT + "/" + OBJECT, carImageURL);
 
         // then
-        assertThrows(IllegalArgumentException.class, executable);
+        assertThrows(AlreadyExistsException.class, executable);
     }
 
     @Disabled("This test is disabled because it creates a new root object and we don't want to do that")
     @Test
-    void create_FromUrl_RootObjectDoesntExist_Uploaded() {
+    void create_FromUrl_RootObjectDoesntExist_Uploaded() throws ExternalServiceException {
         // given
         String bsRootObject = "bs.amt.team04.diduno.education";
         assertFalse(SERVICE.exists(bsRootObject));
@@ -142,7 +155,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void create_FromBytes_RootObjectExistsNewObject_Uploaded() {
+    void create_FromBytes_RootObjectExistsNewObject_Uploaded() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -155,7 +168,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void create_FromBytes_RootObjectExistsObjectAlreadyExists_ThrowException() {
+    void create_FromBytes_RootObjectExistsObjectAlreadyExists_ThrowException() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -166,12 +179,12 @@ class DataObjectServiceTests {
         Executable executable = () -> SERVICE.create(ROOT_OBJECT + "/" + OBJECT, carImageBytes);
 
         // then
-        assertThrows(IllegalArgumentException.class, executable);
+        assertThrows(AlreadyExistsException.class, executable);
     }
 
     @Disabled("This test is disabled because it creates a new root object and we don't want to do that")
     @Test
-    void create_FromBytes_RootObjectDoesntExist_Uploaded() {
+    void create_FromBytes_RootObjectDoesntExist_Uploaded() throws ExternalServiceException {
         // given
         String bsRootObject = "bs.amt.team04.diduno.education";
         assertFalse(SERVICE.exists(bsRootObject));
@@ -186,7 +199,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void update_FromUrl_RootObjectExistsObjectExists_Updated() {
+    void update_FromUrl_RootObjectExistsObjectExists_Updated() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -201,7 +214,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void update_FromUrl_RootObjectExistsObjectDoesntExist_ThrowException() {
+    void update_FromUrl_RootObjectExistsObjectDoesntExist_ThrowException() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -210,11 +223,11 @@ class DataObjectServiceTests {
         Executable executable = () -> SERVICE.update(ROOT_OBJECT + "/" + OBJECT, treeImageURL);
 
         // then
-        assertThrows(IllegalArgumentException.class, executable);
+        assertThrows(NotFoundException.class, executable);
     }
 
     @Test
-    void update_FromUrl_RootObjectDoesntExist_ThrowException() {
+    void update_FromUrl_RootObjectDoesntExist_ThrowException() throws ExternalServiceException {
         // given
         String bsRootObject = "bs.amt.team04.diduno.education";
         assertFalse(SERVICE.exists(bsRootObject));
@@ -224,11 +237,11 @@ class DataObjectServiceTests {
         Executable executable = () -> SERVICE.update(bsRootObject + "/" + OBJECT, treeImageURL);
 
         // then
-        assertThrows(IllegalArgumentException.class, executable);
+        assertThrows(NotFoundException.class, executable);
     }
 
     @Test
-    void update_FromBytes_RootObjectExistsObjectExists_Updated() {
+    void update_FromBytes_RootObjectExistsObjectExists_Updated() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -243,7 +256,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void update_FromBytes_RootObjectExistsObjectDoesntExist_ThrowException() {
+    void update_FromBytes_RootObjectExistsObjectDoesntExist_ThrowException() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -252,11 +265,11 @@ class DataObjectServiceTests {
         Executable executable = () -> SERVICE.update(ROOT_OBJECT + "/" + OBJECT, treeImageBytes);
 
         // then
-        assertThrows(IllegalArgumentException.class, executable);
+        assertThrows(NotFoundException.class, executable);
     }
 
     @Test
-    void update_FromBytes_RootObjectDoesntExist_ThrowException() {
+    void update_FromBytes_RootObjectDoesntExist_ThrowException() throws ExternalServiceException {
         // given
         String bsRootObject = "bs.amt.team04.diduno.education";
         assertFalse(SERVICE.exists(bsRootObject));
@@ -266,11 +279,11 @@ class DataObjectServiceTests {
         Executable executable = () -> SERVICE.update(bsRootObject + "/" + OBJECT, treeImageBytes);
 
         // then
-        assertThrows(IllegalArgumentException.class, executable);
+        assertThrows(NotFoundException.class, executable);
     }
 
     @Test
-    void read_ObjectExists_Downloaded() {
+    void read_ObjectExists_Downloaded() throws ExternalServiceException, NotAnObjectException, NotFoundException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -285,7 +298,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void read_ObjectDoesntExist_ThrowException() {
+    void read_ObjectDoesntExist_ThrowException() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -294,11 +307,11 @@ class DataObjectServiceTests {
         Executable executable = () -> SERVICE.read(ROOT_OBJECT + "/" + OBJECT);
 
         // then
-        assertThrows(IllegalArgumentException.class, executable);
+        assertThrows(NotFoundException.class, executable);
     }
 
     @Test
-    void publish_ObjectExists_Published() {
+    void publish_ObjectExists_Published() throws NotAnObjectException, NotFoundException, ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -313,7 +326,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void publish_ObjectDoesntExist_ThrowException() {
+    void publish_ObjectDoesntExist_ThrowException() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -322,11 +335,11 @@ class DataObjectServiceTests {
         Executable executable = () -> SERVICE.publish(ROOT_OBJECT + "/" + OBJECT, 10);
 
         // then
-        assertThrows(IllegalArgumentException.class, executable);
+        assertThrows(NotFoundException.class, executable);
     }
 
     @Test
-    void delete_SingleObjectExists_Removed() {
+    void delete_SingleObjectExists_Removed() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -341,7 +354,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void delete_SingleObjectDoesntExist_ThrowException() {
+    void delete_SingleObjectDoesntExist_ThrowException() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -350,11 +363,11 @@ class DataObjectServiceTests {
         Executable executable = () -> SERVICE.delete(ROOT_OBJECT + "/" + OBJECT, false);
 
         // then
-        assertThrows(IllegalArgumentException.class, executable);
+        assertThrows(NotFoundException.class, executable);
     }
 
     @Test
-    void delete_FolderObjectExistWithoutRecursiveOption_ThrowException() {
+    void delete_FolderObjectExistWithoutRecursiveOption_ThrowException() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + FOLDER));
@@ -366,13 +379,13 @@ class DataObjectServiceTests {
         Executable executable = () -> SERVICE.delete(ROOT_OBJECT + "/" + FOLDER, false);
 
         // then
-        assertThrows(IllegalArgumentException.class, executable);
+        assertThrows(DeleteCollectionNoRecursiveException.class, executable);
         assertTrue(SERVICE.exists(ROOT_OBJECT + "/" + FOLDER));
         assertTrue(SERVICE.exists(ROOT_OBJECT + "/" + FOLDER + "/" + OBJECT));
     }
 
     @Test
-    void delete_FolderObjectExistWithRecursiveOption_Removed() {
+    void delete_FolderObjectExistWithRecursiveOption_Removed() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + FOLDER));
@@ -388,7 +401,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void delete_RootObjectNotEmptyWithoutRecursiveOption_ThrowException() {
+    void delete_RootObjectNotEmptyWithoutRecursiveOption_ThrowException() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -399,12 +412,12 @@ class DataObjectServiceTests {
         Executable executable = () -> SERVICE.delete(ROOT_OBJECT, false);
 
         // then
-        assertThrows(IllegalArgumentException.class, executable);
+        assertThrows(DeleteCollectionNoRecursiveException.class, executable);
     }
 
     @Disabled("This test is disabled because it deletes a root object and we don't want to do that")
     @Test
-    void delete_RootObjectNotEmptyWithRecursiveOption_Removed() {
+    void delete_RootObjectNotEmptyWithRecursiveOption_Removed() throws ExternalServiceException {
         // given
         assertTrue(SERVICE.exists(ROOT_OBJECT));
         assertFalse(SERVICE.exists(ROOT_OBJECT + "/" + OBJECT));
@@ -419,7 +432,7 @@ class DataObjectServiceTests {
     }
 
     @Test
-    void delete_RootObjectNotExists_ThrowException() {
+    void delete_RootObjectNotExists_ThrowException() throws ExternalServiceException {
         // given
         String bsRootObject = "bs.amt.team04.diduno.education";
         assertFalse(SERVICE.exists(bsRootObject));
@@ -428,7 +441,7 @@ class DataObjectServiceTests {
         Executable executable = () -> SERVICE.delete(bsRootObject, false);
 
         // then
-        assertThrows(IllegalArgumentException.class, executable);
+        assertThrows(NotFoundException.class, executable);
     }
 
 }

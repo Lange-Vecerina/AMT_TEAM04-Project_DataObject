@@ -2,6 +2,7 @@ package org.heig.team04.dataobject.controller;
 
 import org.heig.team04.dataobject.dto.DTOs;
 import org.heig.team04.dataobject.service.ServiceInterface;
+import org.heig.team04.dataobject.service.exceptions.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,8 @@ public class AppController {
             service.create(uriWithSourceDTO.getUri(), uriWithSourceDTO.getSource());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(500).body(e.getMessage());
+        } catch (AlreadyExistsException | InvalidURLException | URLNotAccessibleException | ExternalServiceException e) {
+            throw new IllegalArgumentException(e);
         }
         return ResponseEntity.ok().build();
     }
@@ -29,7 +32,7 @@ public class AppController {
     public ResponseEntity<String> create(@RequestBody DTOs.UriWithContentDTO uriWithContentDTO) {
         try {
             service.create(uriWithContentDTO.getUri(), uriWithContentDTO.getContent());
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | AlreadyExistsException | ExternalServiceException e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }
         return ResponseEntity.ok().build();
@@ -40,7 +43,7 @@ public class AppController {
         byte[] content;
         try {
             content = service.read(uriDTO.getUri());
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NotFoundException | NotAnObjectException | ExternalServiceException e) {
             return null;
         }
         return ResponseEntity.ok(new DTOs.ContentDTO(content));
@@ -50,7 +53,8 @@ public class AppController {
     public ResponseEntity<String> update(@RequestBody DTOs.UriWithSourceDTO uriWithSourceDTO) {
         try {
             service.update(uriWithSourceDTO.getUri(), uriWithSourceDTO.getSource());
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NotFoundException | NotAnObjectException | InvalidURLException |
+                 URLNotAccessibleException | ExternalServiceException e) {
             return ResponseEntity.status(404).body("Object not found");
         }
         return ResponseEntity.ok("Object updated");
@@ -60,7 +64,7 @@ public class AppController {
     public ResponseEntity<String> update(@RequestBody DTOs.UriWithContentDTO uriWithContentDTO) {
         try {
             service.update(uriWithContentDTO.getUri(), uriWithContentDTO.getContent());
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NotFoundException | NotAnObjectException | ExternalServiceException e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }
         return ResponseEntity.ok("Object updated");
@@ -70,7 +74,8 @@ public class AppController {
     public ResponseEntity<String> delete(@RequestParam String uri, @RequestParam(defaultValue = "false") boolean ttl) {
         try {
             service.delete(uri, ttl);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NotFoundException | DeleteCollectionNoRecursiveException |
+                 ExternalServiceException e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }
         return ResponseEntity.ok("Object deleted");
@@ -81,7 +86,7 @@ public class AppController {
         String link;
         try {
             link = service.publish(uri, ttl);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NotFoundException | NotAnObjectException | ExternalServiceException e) {
             return ResponseEntity.status(404).body(new DTOs.LinkDTO("Object not found"));
         }
         return ResponseEntity.ok(new DTOs.LinkDTO(link));
@@ -92,7 +97,7 @@ public class AppController {
         boolean exists;
         try {
             exists = service.exists(uri);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | ExternalServiceException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
 
