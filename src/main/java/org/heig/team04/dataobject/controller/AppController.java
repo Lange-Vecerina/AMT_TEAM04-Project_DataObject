@@ -1,106 +1,127 @@
 package org.heig.team04.dataobject.controller;
 
-import org.heig.team04.dataobject.dto.DTOs;
+import org.heig.team04.dataobject.dto.SourceDTO;
 import org.heig.team04.dataobject.service.ServiceInterface;
 import org.heig.team04.dataobject.service.exceptions.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
+
+/**
+ * This class is the controller of the application.
+ *
+ * @author Ivan Vecerina, Yanik Lange
+ * @version 1.0
+ */
 @RestController
 @RequestMapping("/data-object")
 public class AppController {
-
+    // The service of the application
     private final ServiceInterface service;
 
     public AppController(ServiceInterface service) {
         this.service = service;
     }
 
-    @PostMapping("/create-with-source")
-    public ResponseEntity<String> create(@RequestBody DTOs.UriWithSourceDTO uriWithSourceDTO) {
+    @PostMapping("")
+    public ResponseEntity<String> create(@RequestParam String uri, @RequestBody SourceDTO source) {
+        boolean success;
         try {
-            service.create(uriWithSourceDTO.getUri(), uriWithSourceDTO.getSource());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(500).body(e.getMessage());
-        } catch (AlreadyExistsException | InvalidURLException | URLNotAccessibleException | ExternalServiceException e) {
-            throw new IllegalArgumentException(e);
+            if (source.getUrl().equals("")) {
+                success = service.create(uri, source.getContent());
+            } else {
+                success = service.create(uri, source.getUrl());
+            }
+        } catch (InvalidURLException | AlreadyExistsException | URLNotAccessibleException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (ExternalServiceException e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
-        return ResponseEntity.ok().build();
+
+        if (success) {
+            return ResponseEntity.ok("Object created");
+        } else {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
-    @PostMapping("/create-with-content")
-    public ResponseEntity<String> create(@RequestBody DTOs.UriWithContentDTO uriWithContentDTO) {
-        try {
-            service.create(uriWithContentDTO.getUri(), uriWithContentDTO.getContent());
-        } catch (IllegalArgumentException | AlreadyExistsException | ExternalServiceException e) {
-            return ResponseEntity.status(500).body(e.getMessage());
-        }
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/read")
-    public ResponseEntity<DTOs.ContentDTO> read(@RequestParam DTOs.UriDTO uriDTO) {
+    @GetMapping("/content")
+    public ResponseEntity<String> read(@RequestParam String uri) {
         byte[] content;
+
         try {
-            content = service.read(uriDTO.getUri());
-        } catch (IllegalArgumentException | NotFoundException | NotAnObjectException | ExternalServiceException e) {
-            return null;
+            content = service.read(uri);
+        } catch (NotFoundException | NotAnObjectException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (ExternalServiceException e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
-        return ResponseEntity.ok(new DTOs.ContentDTO(content));
+
+        return ResponseEntity.ok().body(Arrays.toString(content));
     }
 
-    @PutMapping("/update-with-source")
-    public ResponseEntity<String> update(@RequestBody DTOs.UriWithSourceDTO uriWithSourceDTO) {
+    @PutMapping("")
+    public ResponseEntity<String> update(@RequestParam String uri, @RequestBody SourceDTO source) {
+        boolean success;
         try {
-            service.update(uriWithSourceDTO.getUri(), uriWithSourceDTO.getSource());
-        } catch (IllegalArgumentException | NotFoundException | NotAnObjectException | InvalidURLException |
-                 URLNotAccessibleException | ExternalServiceException e) {
-            return ResponseEntity.status(404).body("Object not found");
+            if (source.getUrl().equals("")) {
+                success = service.update(uri, source.getContent());
+            } else {
+                success = service.update(uri, source.getUrl());
+            }
+        } catch (NotFoundException | NotAnObjectException | InvalidURLException | URLNotAccessibleException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (ExternalServiceException e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
-        return ResponseEntity.ok("Object updated");
+
+        if (success) {
+            return ResponseEntity.ok("Object updated");
+        } else {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
-    @PutMapping("/update-with-content")
-    public ResponseEntity<String> update(@RequestBody DTOs.UriWithContentDTO uriWithContentDTO) {
+    @DeleteMapping("")
+    public ResponseEntity<String> delete(@RequestParam String uri, @RequestParam(defaultValue = "false") boolean recursive) {
+        boolean success;
         try {
-            service.update(uriWithContentDTO.getUri(), uriWithContentDTO.getContent());
-        } catch (IllegalArgumentException | NotFoundException | NotAnObjectException | ExternalServiceException e) {
-            return ResponseEntity.status(500).body(e.getMessage());
+            success = service.delete(uri, recursive);
+        } catch (NotFoundException | DeleteCollectionNoRecursiveException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (ExternalServiceException e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
-        return ResponseEntity.ok("Object updated");
+
+        if (success) {
+            return ResponseEntity.ok("Object deleted");
+        } else {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
-    @DeleteMapping("/delete")
-    public ResponseEntity<String> delete(@RequestParam String uri, @RequestParam(defaultValue = "false") boolean ttl) {
-        try {
-            service.delete(uri, ttl);
-        } catch (IllegalArgumentException | NotFoundException | DeleteCollectionNoRecursiveException |
-                 ExternalServiceException e) {
-            return ResponseEntity.status(500).body(e.getMessage());
-        }
-        return ResponseEntity.ok("Object deleted");
-    }
-
-    @GetMapping("/publish")
-    public ResponseEntity<DTOs.LinkDTO> publish(@RequestParam String uri, @RequestParam(defaultValue = "1800") int ttl) {
-        String link;
+    @GetMapping("/link")
+    public ResponseEntity<String> publish(@RequestParam String uri, @RequestParam(defaultValue = "1800") int ttl) {
+        String link = "";
         try {
             link = service.publish(uri, ttl);
-        } catch (IllegalArgumentException | NotFoundException | NotAnObjectException | ExternalServiceException e) {
-            return ResponseEntity.status(404).body(new DTOs.LinkDTO("Object not found"));
+        } catch (NotFoundException | NotAnObjectException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (ExternalServiceException e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
-        return ResponseEntity.ok(new DTOs.LinkDTO(link));
+        return ResponseEntity.ok(link);
     }
 
-    @GetMapping("/exists")
+    @GetMapping("")
     public ResponseEntity<String> exists(@RequestParam String uri) {
         boolean exists;
         try {
             exists = service.exists(uri);
-        } catch (IllegalArgumentException | ExternalServiceException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (ExternalServiceException e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
-
-        return ResponseEntity.ok().body(String.valueOf(exists));
+        return ResponseEntity.ok(String.valueOf(exists));
     }
 }

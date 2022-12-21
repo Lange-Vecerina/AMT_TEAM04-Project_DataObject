@@ -383,7 +383,7 @@ public class ServiceAwsImpl implements ServiceInterface {
                     .build();
 
             // Generate presigned URL
-            return presigner.presignGetObject(request).toString();
+            return presigner.presignGetObject(request).url().toString();
         } catch (Exception e) {
             throw new ExternalServiceException(e);
         }
