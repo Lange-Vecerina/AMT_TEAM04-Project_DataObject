@@ -1,26 +1,25 @@
 package org.heig.team04.dataobject.controller;
 
-import com.amazonaws.AmazonServiceException;
+import org.heig.team04.dataobject.dto.DTOs;
 import org.heig.team04.dataobject.service.ServiceInterface;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.heig.team04.dataobject.dto.DTOs;
 
 @RestController
 @RequestMapping("/data-object")
 public class AppController {
 
-    private final ServiceInterface appService;
+    private final ServiceInterface service;
 
-    public AppController(ServiceInterface appService) {
-        this.appService = appService;
+    public AppController(ServiceInterface service) {
+        this.service = service;
     }
 
     @PostMapping("/create-with-source")
     public ResponseEntity<String> create(@RequestBody DTOs.UriWithSourceDTO uriWithSourceDTO) {
         try {
-            appService.create(uriWithSourceDTO.getUri(), uriWithSourceDTO.getSource());
-        } catch (AmazonServiceException e) {
+            service.create(uriWithSourceDTO.getUri(), uriWithSourceDTO.getSource());
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }
         return ResponseEntity.ok().build();
@@ -29,8 +28,8 @@ public class AppController {
     @PostMapping("/create-with-content")
     public ResponseEntity<String> create(@RequestBody DTOs.UriWithContentDTO uriWithContentDTO) {
         try {
-            appService.create(uriWithContentDTO.getUri(), uriWithContentDTO.getContent());
-        } catch (AmazonServiceException e) {
+            service.create(uriWithContentDTO.getUri(), uriWithContentDTO.getContent());
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }
         return ResponseEntity.ok().build();
@@ -40,8 +39,8 @@ public class AppController {
     public ResponseEntity<DTOs.ContentDTO> read(@RequestParam DTOs.UriDTO uriDTO) {
         byte[] content;
         try {
-            content = appService.read(uriDTO.getUri());
-        } catch (AmazonServiceException e) {
+            content = service.read(uriDTO.getUri());
+        } catch (IllegalArgumentException e) {
             return null;
         }
         return ResponseEntity.ok(new DTOs.ContentDTO(content));
@@ -50,8 +49,8 @@ public class AppController {
     @PutMapping("/update-with-source")
     public ResponseEntity<String> update(@RequestBody DTOs.UriWithSourceDTO uriWithSourceDTO) {
         try {
-            appService.update(uriWithSourceDTO.getUri(), uriWithSourceDTO.getSource());
-        } catch (AmazonServiceException e) {
+            service.update(uriWithSourceDTO.getUri(), uriWithSourceDTO.getSource());
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(404).body("Object not found");
         }
         return ResponseEntity.ok("Object updated");
@@ -60,8 +59,8 @@ public class AppController {
     @PutMapping("/update-with-content")
     public ResponseEntity<String> update(@RequestBody DTOs.UriWithContentDTO uriWithContentDTO) {
         try {
-            appService.update(uriWithContentDTO.getUri(), uriWithContentDTO.getContent());
-        } catch (AmazonServiceException e) {
+            service.update(uriWithContentDTO.getUri(), uriWithContentDTO.getContent());
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }
         return ResponseEntity.ok("Object updated");
@@ -70,8 +69,8 @@ public class AppController {
     @DeleteMapping("/delete")
     public ResponseEntity<String> delete(@RequestParam String uri, @RequestParam(defaultValue = "false") boolean ttl) {
         try {
-            appService.delete(uri, ttl);
-        } catch (AmazonServiceException e) {
+            service.delete(uri, ttl);
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }
         return ResponseEntity.ok("Object deleted");
@@ -81,8 +80,8 @@ public class AppController {
     public ResponseEntity<DTOs.LinkDTO> publish(@RequestParam String uri, @RequestParam(defaultValue = "1800") int ttl) {
         String link;
         try {
-            link = appService.publish(uri, ttl);
-        } catch (AmazonServiceException e) {
+            link = service.publish(uri, ttl);
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(404).body(new DTOs.LinkDTO("Object not found"));
         }
         return ResponseEntity.ok(new DTOs.LinkDTO(link));
@@ -92,9 +91,9 @@ public class AppController {
     public ResponseEntity<String> exists(@RequestParam String uri) {
         boolean exists;
         try {
-            exists = appService.exists(uri);
-        } catch (AmazonServiceException e) {
-            return ResponseEntity.badRequest().body(e.getStatusCode() + " " + e.getErrorMessage());
+            exists = service.exists(uri);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
 
         return ResponseEntity.ok().body(String.valueOf(exists));
