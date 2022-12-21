@@ -8,7 +8,6 @@ import org.heig.team04.dataobject.service.exceptions.*;
  * @author Ivan Vecerina, Yanik Lange
  * @version 1.0
  */
-@Service
 public interface ServiceInterface {
     /**
      * Create a new object at the given URI with the content of the given source.
