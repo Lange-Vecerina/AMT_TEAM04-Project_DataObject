@@ -72,6 +72,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
+        <finalName>data-object</finalName>
     </build>
 
 </project>

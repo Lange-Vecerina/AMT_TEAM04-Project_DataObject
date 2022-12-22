@@ -29,8 +29,10 @@ public class AppController {
         boolean success;
         try {
             if (source.getUrl().equals("")) {
+                System.out.println("=================SUUUUUUUUUUUUUUUUUU");
                 success = service.create(uri, source.getContent());
             } else {
+                System.out.println("======================NOOOOOOOOOOOOOOOOOOOOOOOOOO");
                 success = service.create(uri, source.getUrl());
             }
         } catch (InvalidURLException | AlreadyExistsException | URLNotAccessibleException e) {
