@@ -63,6 +63,12 @@ class DataObjectServiceTests {
             if (System.currentTimeMillis() - start > 10000) {
                 throw new RuntimeException("Object still exists after 10 seconds (tearDown)");
             }
+            // Wait 100ms
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         // Get current time
@@ -72,6 +78,12 @@ class DataObjectServiceTests {
             // If the loop has been running for more than 10 seconds, throw an exception
             if (System.currentTimeMillis() - start > 10000) {
                 throw new RuntimeException("Folder still exists after 10 seconds (tearDown)");
+            }
+            // Wait 100ms
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
         // End of section to remove
