@@ -52,14 +52,29 @@ class DataObjectServiceTests {
             SERVICE.delete(ROOT_OBJECT + "/" + FOLDER, true);
         }
 
-        // TODO: Remove this when tests are made async,
+        // TODO: Remove this section when tests are made async,
         //  it's just here to make sure the tests don't fail because of the async nature of the service
-        // Wait for eventual consistency
-        try {
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        // Start of section to remove
+        // Get current time
+        long start = System.currentTimeMillis();
+        // Loop while the object is still there
+        while (SERVICE.exists(ROOT_OBJECT + "/" + OBJECT)) {
+            // If the loop has been running for more than 10 seconds, throw an exception
+            if (System.currentTimeMillis() - start > 10000) {
+                throw new RuntimeException("Object still exists after 10 seconds (tearDown)");
+            }
         }
+
+        // Get current time
+        start = System.currentTimeMillis();
+        // Loop while the folder is still there
+        while (SERVICE.exists(ROOT_OBJECT + "/" + FOLDER)) {
+            // If the loop has been running for more than 10 seconds, throw an exception
+            if (System.currentTimeMillis() - start > 10000) {
+                throw new RuntimeException("Folder still exists after 10 seconds (tearDown)");
+            }
+        }
+        // End of section to remove
     }
 
     @Test
