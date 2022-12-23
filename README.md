@@ -124,11 +124,21 @@ Variable : **AWS_SECRET_ACCESS_KEY** Value : **<your_aws_secret_key>**
 Example how to set environment variable on windows :
 https://docs.oracle.com/en/database/oracle/machine-learning/oml4r/1.5.1/oread/creating-and-modifying-environment-variables-on-windows.html#GUID-DD6F9982-60D5-48F6-8270-A27EC53807D0
 
-> TODO ajouter les commandes pour récupérer les dépendances
+To get AWS and S3 dependencies, run the following command :
 
-> TODO ajouter les commandes pour compiler, ainsi que quelque explications sur comment et pourquoi vous utilisez Maven 
+```mvn install```
 
-> TODO ajouter la commande sur comment lancer un ou tout les tests 
+To compile the project, use the following command :
+
+```mvn compile```
+
+To generate a package use :
+
+```mvn package```
+
+To run the tests use :
+
+```mvn test```
 
 
 ## **Run the Test Scenarios on your machine**
@@ -136,22 +146,20 @@ https://docs.oracle.com/en/database/oracle/machine-learning/oml4r/1.5.1/oread/cr
 Now that you have everything set up, you can run the test scenarios on your machine.
 
 
-### **Run on your machine TODO**
+### **Run the microservice**
 
-Download the latest **.jar** release on the **Release** section in this github repository.
+Download the latest docker package in github (you can use docker pull command).
 
-Open a *cmd/terminal* and go the directory where you saved your downloaded **.jar**.
+to run a container :
 
-To run the program enter the following command : 
+```docker run --name=data_object_v2 -p 8080:8080 -e AWS_ACCESS_KEY_ID=<AWS_KEY> -e AWS_SECRET_ACCESS_KEY=<AWS_SECRET> ghcr.io/lange-vecerina/amt_team04-project_dataobject```
 
-```java -jar lab3_rekognition-v1-shaded.jar "<your_path_of_the_image_you_want_to_label>"```
+If you don't want to use the package you can build the image yourself with our Dockerfile :
 
-Example of a **fruits.jpg** image in ```D:/image/``` folder :
+```docker build -t <NOM_DE_IMAGE> --build-arg aws_access_key_id=<AWS_KEY> --build-arg aws_secret_access_key=<AWS_SECRET> --target production .```
 
-```java -jar lab3_rekognition-v1-shaded.jar "D:/image/fruits.jpg"```
+If you want only to run the tests in docker :
 
-This will generate 2 temporary links to the bucket :
+```docker build -t <NOM_DE_IMAGE> --build-arg aws_access_key_id=<AWS_KEY> --build-arg aws_secret_access_key=<AWS_SECRET> --target test .```
 
-* The first links to the bucket where the image you asked to be labeled by Amazon Rekognition is.
-* The second links to the result of the labeling (in the bucket too).
-
+Your microservice should be running and is listening to port 8080.
