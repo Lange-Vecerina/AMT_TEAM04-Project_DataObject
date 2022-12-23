@@ -6,7 +6,7 @@ COPY mvnw pom.xml ./
 # clean up the file
 RUN sed -i 's/\r$//' mvnw
 # run with the SH path
-RUN /bin/sh mvnw dependency:resolve
+RUN chmod +x mvnw && /bin/sh mvnw dependency:resolve
 COPY src ./src
 
 ARG aws_access_key_id
